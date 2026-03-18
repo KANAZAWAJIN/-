@@ -3,39 +3,45 @@
 <head>
 <meta charset="UTF-8">
 <title>マインスイーパー</title>
+
 <style>
-  body {
-    font-family: sans-serif;
-    text-align: center;
-  }
-  #board {
-    display: grid;
-    grid-template-columns: repeat(9, 40px);
-    gap: 2px;
-    justify-content: center;
-    margin-top: 20px;
-  }
-  .cell {
-    width: 40px;
-    height: 40px;
-    background: lightgray;
-    border: 1px solid #999;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .open {
-    background: white;
-    cursor: default;
-  }
-  .mine {
-    background: red;
-  }
+body {
+  font-family: sans-serif;
+  text-align: center;
+}
+
+#board {
+  display: grid;
+  grid-template-columns: repeat(9, 40px);
+  gap: 2px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.cell {
+  width: 40px;
+  height: 40px;
+  background: lightgray;
+  border: 1px solid #999;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.open {
+  background: white;
+  cursor: default;
+}
+
+.mine {
+  background: red;
+}
 </style>
 </head>
+
 <body>
 
 <h1>マインスイーパー</h1>
@@ -47,6 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 const size = 9;
 const mineCount = 10;
+
 const board = document.getElementById("board");
 const message = document.getElementById("message");
 
@@ -61,12 +68,9 @@ function init() {
   board.innerHTML = "";
   message.textContent = "";
 
-  // 地雷配置
   while (mines.length < mineCount) {
     let rand = Math.floor(Math.random() * size * size);
-    if (!mines.includes(rand)) {
-      mines.push(rand);
-    }
+    if (!mines.includes(rand)) mines.push(rand);
   }
 
   for (let i = 0; i < size * size; i++) {
@@ -75,7 +79,6 @@ function init() {
     cell.dataset.index = i;
 
     cell.addEventListener("click", leftClick);
-
     cell.addEventListener("contextmenu", (e) => {
       e.preventDefault();
       rightClick(e);
@@ -90,7 +93,7 @@ function leftClick(e) {
   const index = Number(e.target.dataset.index);
 
   if (e.target.classList.contains("open")) return;
-  if (e.target.textContent === "🚩") return; // 旗は開けない
+  if (e.target.textContent === "🚩") return;
 
   if (mines.includes(index)) {
     revealMines();
@@ -117,7 +120,6 @@ function rightClick(e) {
 
 function openCell(index) {
   const cell = cells[index];
-
   if (!cell || cell.classList.contains("open")) return;
 
   cell.classList.add("open");
