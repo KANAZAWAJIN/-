@@ -47,18 +47,23 @@ body {
 .hidden {
   display: none;
 }
+
+/* 👇 操作不能にする */
+.disabled {
+  pointer-events: none;
+}
 </style>
 </head>
 
 <body>
 
-<!-- タイトル画面 -->
+<!-- タイトル -->
 <div id="titleScreen">
   <h1>マインスイーパー</h1>
   <button onclick="startGame()">スタート</button>
 </div>
 
-<!-- ゲーム画面 -->
+<!-- ゲーム -->
 <div id="gameScreen" class="hidden">
   <h1>マインスイーパー</h1>
   <div id="board"></div>
@@ -79,7 +84,7 @@ const message = document.getElementById("message");
 const titleScreen = document.getElementById("titleScreen");
 const gameScreen = document.getElementById("gameScreen");
 
-// ゲーム開始
+// スタート
 function startGame() {
   titleScreen.classList.add("hidden");
   gameScreen.classList.remove("hidden");
@@ -93,6 +98,7 @@ function init() {
   openedCount = 0;
   gameActive = true;
 
+  board.classList.remove("disabled");
   board.innerHTML = "";
   message.textContent = "";
 
@@ -127,12 +133,15 @@ function leftClick(e) {
   if (e.target.classList.contains("open")) return;
   if (e.target.textContent === "🚩") return;
 
+  // 💣 ゲームオーバー
   if (mines.includes(index)) {
     revealMines();
     message.textContent = "ゲームオーバー！";
     gameActive = false;
 
-    // 3秒後にタイトルへ
+    // 👇 完全操作禁止
+    board.classList.add("disabled");
+
     setTimeout(() => {
       gameScreen.classList.add("hidden");
       titleScreen.classList.remove("hidden");
@@ -143,9 +152,12 @@ function leftClick(e) {
 
   openCell(index);
 
+  // 🎉 クリア
   if (openedCount === size * size - mineCount) {
     message.textContent = "クリア！";
     gameActive = false;
+
+    board.classList.add("disabled");
 
     setTimeout(() => {
       gameScreen.classList.add("hidden");
@@ -167,7 +179,7 @@ function rightClick(e) {
   }
 }
 
-// セルを開く
+// セル開く
 function openCell(index) {
   const cell = cells[index];
   if (!cell || cell.classList.contains("open")) return;
@@ -184,12 +196,12 @@ function openCell(index) {
   }
 }
 
-// 周囲の地雷数
+// 地雷数カウント
 function countMines(index) {
   return getNeighbors(index).filter(n => mines.includes(n)).length;
 }
 
-// 隣接マス
+// 隣接取得
 function getNeighbors(index) {
   const neighbors = [];
   const row = Math.floor(index / size);
