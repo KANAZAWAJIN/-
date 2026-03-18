@@ -68,17 +68,20 @@ function init() {
   board.innerHTML = "";
   message.textContent = "";
 
+  // 地雷配置
   while (mines.length < mineCount) {
     let rand = Math.floor(Math.random() * size * size);
     if (!mines.includes(rand)) mines.push(rand);
   }
 
+  // セル生成
   for (let i = 0; i < size * size; i++) {
     const cell = document.createElement("div");
     cell.classList.add("cell");
     cell.dataset.index = i;
 
     cell.addEventListener("click", leftClick);
+
     cell.addEventListener("contextmenu", (e) => {
       e.preventDefault();
       rightClick(e);
@@ -95,16 +98,29 @@ function leftClick(e) {
   if (e.target.classList.contains("open")) return;
   if (e.target.textContent === "🚩") return;
 
+  // 💣 地雷を踏んだ場合
   if (mines.includes(index)) {
     revealMines();
     message.textContent = "ゲームオーバー！";
+
+    // 1秒後にリセット
+    setTimeout(() => {
+      init();
+    }, 1000);
+
     return;
   }
 
   openCell(index);
 
+  // 🎉 クリア判定
   if (openedCount === size * size - mineCount) {
     message.textContent = "クリア！";
+
+    // 1.5秒後にリセット（任意）
+    setTimeout(() => {
+      init();
+    }, 1500);
   }
 }
 
@@ -165,6 +181,7 @@ function revealMines() {
   });
 }
 
+// 初期化
 init();
 
 });
