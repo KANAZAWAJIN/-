@@ -10,6 +10,10 @@ body {
   text-align: center;
 }
 
+#titleScreen {
+  margin-top: 100px;
+}
+
 #board {
   display: grid;
   grid-template-columns: repeat(9, 40px);
@@ -39,42 +43,64 @@ body {
 .mine {
   background: red;
 }
+
+.hidden {
+  display: none;
+}
 </style>
 </head>
 
 <body>
 
-<h1>マインスイーパー</h1>
-<div id="board"></div>
-<p id="message"></p>
+<!-- タイトル画面 -->
+<div id="titleScreen">
+  <h1>マインスイーパー</h1>
+  <button onclick="startGame()">スタート</button>
+</div>
+
+<!-- ゲーム画面 -->
+<div id="gameScreen" class="hidden">
+  <h1>マインスイーパー</h1>
+  <div id="board"></div>
+  <p id="message"></p>
+</div>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-
 const size = 9;
 const mineCount = 10;
-
-const board = document.getElementById("board");
-const message = document.getElementById("message");
 
 let cells = [];
 let mines = [];
 let openedCount = 0;
+let gameActive = false;
 
+const board = document.getElementById("board");
+const message = document.getElementById("message");
+const titleScreen = document.getElementById("titleScreen");
+const gameScreen = document.getElementById("gameScreen");
+
+// ゲーム開始
+function startGame() {
+  titleScreen.classList.add("hidden");
+  gameScreen.classList.remove("hidden");
+  init();
+}
+
+// 初期化
 function init() {
   cells = [];
   mines = [];
   openedCount = 0;
+  gameActive = true;
+
   board.innerHTML = "";
   message.textContent = "";
 
-  // 地雷配置
   while (mines.length < mineCount) {
     let rand = Math.floor(Math.random() * size * size);
     if (!mines.includes(rand)) mines.push(rand);
   }
 
-  // セル生成
   for (let i = 0; i < size * size; i++) {
     const cell = document.createElement("div");
     cell.classList.add("cell");
@@ -92,39 +118,46 @@ function init() {
   }
 }
 
+// 左クリック
 function leftClick(e) {
+  if (!gameActive) return;
+
   const index = Number(e.target.dataset.index);
 
   if (e.target.classList.contains("open")) return;
   if (e.target.textContent === "🚩") return;
 
-  // 💣 地雷を踏んだ場合
   if (mines.includes(index)) {
     revealMines();
     message.textContent = "ゲームオーバー！";
+    gameActive = false;
 
-    // 1秒後にリセット
+    // 3秒後にタイトルへ
     setTimeout(() => {
-      init();
-    }, 1000);
+      gameScreen.classList.add("hidden");
+      titleScreen.classList.remove("hidden");
+    }, 3000);
 
     return;
   }
 
   openCell(index);
 
-  // 🎉 クリア判定
   if (openedCount === size * size - mineCount) {
     message.textContent = "クリア！";
+    gameActive = false;
 
-    // 1.5秒後にリセット（任意）
     setTimeout(() => {
-      init();
-    }, 1500);
+      gameScreen.classList.add("hidden");
+      titleScreen.classList.remove("hidden");
+    }, 3000);
   }
 }
 
+// 右クリック
 function rightClick(e) {
+  if (!gameActive) return;
+
   if (e.target.classList.contains("open")) return;
 
   if (e.target.textContent === "🚩") {
@@ -134,6 +167,7 @@ function rightClick(e) {
   }
 }
 
+// セルを開く
 function openCell(index) {
   const cell = cells[index];
   if (!cell || cell.classList.contains("open")) return;
@@ -150,10 +184,12 @@ function openCell(index) {
   }
 }
 
+// 周囲の地雷数
 function countMines(index) {
   return getNeighbors(index).filter(n => mines.includes(n)).length;
 }
 
+// 隣接マス
 function getNeighbors(index) {
   const neighbors = [];
   const row = Math.floor(index / size);
@@ -174,17 +210,13 @@ function getNeighbors(index) {
   return neighbors;
 }
 
+// 地雷表示
 function revealMines() {
   mines.forEach(i => {
     cells[i].classList.add("mine");
     cells[i].textContent = "💣";
   });
 }
-
-// 初期化
-init();
-
-});
 </script>
 
 </body>
