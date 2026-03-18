@@ -10,34 +10,28 @@ body {
   text-align: center;
 }
 
-#titleScreen {
-  margin-top: 100px;
-}
-
 #board {
   display: grid;
-  grid-template-columns: repeat(9, 40px);
   gap: 2px;
   justify-content: center;
   margin-top: 20px;
 }
 
 .cell {
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   background: lightgray;
   border: 1px solid #999;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: bold;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
 }
 
 .open {
   background: white;
-  cursor: default;
 }
 
 .mine {
@@ -48,7 +42,6 @@ body {
   display: none;
 }
 
-/* 👇 操作不能にする */
 .disabled {
   pointer-events: none;
 }
@@ -57,55 +50,56 @@ body {
 
 <body>
 
-<!-- タイトル -->
 <div id="titleScreen">
   <h1>マインスイーパー</h1>
-  <button onclick="startGame()">スタート</button>
+  <button onclick="startGame(9,10)">初級</button>
+  <button onclick="startGame(16,40)">中級</button>
+  <button onclick="startGame(30,99)">上級</button>
 </div>
 
-<!-- ゲーム -->
 <div id="gameScreen" class="hidden">
-  <h1>マインスイーパー</h1>
+  <h2 id="mode"></h2>
   <div id="board"></div>
   <p id="message"></p>
 </div>
 
 <script>
-const size = 9;
-const mineCount = 10;
-
+let size, mineCount;
 let cells = [];
 let mines = [];
 let openedCount = 0;
 let gameActive = false;
+let firstClick = true;
 
 const board = document.getElementById("board");
 const message = document.getElementById("message");
 const titleScreen = document.getElementById("titleScreen");
 const gameScreen = document.getElementById("gameScreen");
+const modeText = document.getElementById("mode");
 
-// スタート
-function startGame() {
+function startGame(s, m) {
+  size = s;
+  mineCount = m;
+
   titleScreen.classList.add("hidden");
   gameScreen.classList.remove("hidden");
+
+  modeText.textContent = `${s}×${s} / 地雷${m}`;
   init();
 }
 
-// 初期化
 function init() {
   cells = [];
   mines = [];
   openedCount = 0;
   gameActive = true;
+  firstClick = true;
 
   board.classList.remove("disabled");
   board.innerHTML = "";
   message.textContent = "";
 
-  while (mines.length < mineCount) {
-    let rand = Math.floor(Math.random() * size * size);
-    if (!mines.includes(rand)) mines.push(rand);
-  }
+  board.style.gridTemplateColumns = `repeat(${size}, 30px)`;
 
   for (let i = 0; i < size * size; i++) {
     const cell = document.createElement("div");
@@ -113,8 +107,7 @@ function init() {
     cell.dataset.index = i;
 
     cell.addEventListener("click", leftClick);
-
-    cell.addEventListener("contextmenu", (e) => {
+    cell.addEventListener("contextmenu", e => {
       e.preventDefault();
       rightClick(e);
     });
@@ -124,7 +117,19 @@ function init() {
   }
 }
 
-// 左クリック
+// 初手後に地雷配置
+function placeMines(safeIndex) {
+  while (mines.length < mineCount) {
+    let rand = Math.floor(Math.random() * size * size);
+
+    // 初手とその周囲は安全
+    if (rand === safeIndex) continue;
+    if (getNeighbors(safeIndex).includes(rand)) continue;
+
+    if (!mines.includes(rand)) mines.push(rand);
+  }
+}
+
 function leftClick(e) {
   if (!gameActive) return;
 
@@ -133,13 +138,15 @@ function leftClick(e) {
   if (e.target.classList.contains("open")) return;
   if (e.target.textContent === "🚩") return;
 
-  // 💣 ゲームオーバー
+  if (firstClick) {
+    placeMines(index);
+    firstClick = false;
+  }
+
   if (mines.includes(index)) {
     revealMines();
     message.textContent = "ゲームオーバー！";
     gameActive = false;
-
-    // 👇 完全操作禁止
     board.classList.add("disabled");
 
     setTimeout(() => {
@@ -152,11 +159,9 @@ function leftClick(e) {
 
   openCell(index);
 
-  // 🎉 クリア
   if (openedCount === size * size - mineCount) {
     message.textContent = "クリア！";
     gameActive = false;
-
     board.classList.add("disabled");
 
     setTimeout(() => {
@@ -166,20 +171,15 @@ function leftClick(e) {
   }
 }
 
-// 右クリック
 function rightClick(e) {
   if (!gameActive) return;
 
   if (e.target.classList.contains("open")) return;
 
-  if (e.target.textContent === "🚩") {
-    e.target.textContent = "";
-  } else {
-    e.target.textContent = "🚩";
-  }
+  e.target.textContent =
+    e.target.textContent === "🚩" ? "" : "🚩";
 }
 
-// セル開く
 function openCell(index) {
   const cell = cells[index];
   if (!cell || cell.classList.contains("open")) return;
@@ -196,12 +196,10 @@ function openCell(index) {
   }
 }
 
-// 地雷数カウント
 function countMines(index) {
   return getNeighbors(index).filter(n => mines.includes(n)).length;
 }
 
-// 隣接取得
 function getNeighbors(index) {
   const neighbors = [];
   const row = Math.floor(index / size);
@@ -222,7 +220,6 @@ function getNeighbors(index) {
   return neighbors;
 }
 
-// 地雷表示
 function revealMines() {
   mines.forEach(i => {
     cells[i].classList.add("mine");
